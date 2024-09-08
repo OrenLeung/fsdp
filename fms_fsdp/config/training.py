@@ -5,12 +5,12 @@ from typing import Optional, Union
 @dataclass
 class train_config:
     # model
-    model_variant: str = "7b"
-    ckpt_load_path: str = "/fsx/output/ckpt"
-    ckpt_save_path: str = "/fsx/output/ckpt"
+    model_variant: str = "llama2_13b"
+    ckpt_load_path: str = "/raid/ibm"
+    ckpt_save_path: str = "/raid/ibm"
 
     # dataset and dataloader
-    use_dummy_dataset: bool = False
+    use_dummy_dataset: bool = True
     data_path: str = "/fsx/data"
     file_type: str = "arrow"
     col_name: str = "tokens"
@@ -51,7 +51,7 @@ class train_config:
 
     # logging
     report_interval: int = 100
-    checkpoint_interval: int = 10000
+    checkpoint_interval: int = 20000
     tracker: Optional[str] = None  # None, "wandb", "aim"
     tracker_dir: str = "/fsx/aim_logs/llama"
     tracker_project_name: str = "llama"  # project name for a group of runs

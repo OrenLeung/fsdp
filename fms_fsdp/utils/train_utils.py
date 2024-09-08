@@ -30,6 +30,7 @@ def train(
     checkpointer,
     start_step,
     tokens_seen,
+    llama_config
 ):
     if cfg.tracker:
         if cfg.tracker not in ["wandb", "aim"]:
@@ -145,6 +146,34 @@ def train(
                     "overall token per day:",
                     int(new_tokens_seen / elapsed_time * 3600 * 24),
                 )
+                
+                h100_theory_flops = 989e12
+                
+                # get the number of flops per token then get MFU
+                
+                # - tokens_per_second (R): Achieved throughput in tokens per second
+                # - N: Number of parameters in the model (decoder-only)
+                # - L: Number of layers
+                # - H: Number of attention heads
+                # - Q: Head dimension
+                # - T: Sequence length
+                # - P: Total theoretical peak matmul throughput (FLOPs per second)
+
+                # Returns:
+                # - MFU (Model FLOPs Utilization) as a ratio
+                # """
+                # # Compute FLOPs required per token
+                # flops_per_token = 6 * N + 12 * L * H * Q * T
+                # we are 8B param model
+                
+                flops_per_token = 6 * 8e9 + 12 * llama_config.nlayers * llama_config.nheads * llama_config.emb_dim // llama_config.nheads * cfg.seq_length
+                
+                # mfu = flops_per_token * tokens_per_sec / P
+                
+                mfu = flops_per_token * current_throughput / h100_theory_flops
+                
+                print("MFU:", mfu)
+                
                 if cfg.tracker:
                     vals_to_track = {
                         "learning rate": current_lr,
@@ -166,14 +195,14 @@ def train(
             ddp_stats.zero_()
         torch.cuda.reset_peak_memory_stats(device=torch.cuda.current_device())
 
-        if batch_idx % cfg.checkpoint_interval == 0:
-            checkpointer.save(
-                batch_idx,
-                model,
-                optimizer,
-                None,
-                tokens_seen=tokens_seen + new_tokens_seen,
-            )
+        # if batch_idx % cfg.checkpoint_interval == 0:
+        #     checkpointer.save(
+        #         batch_idx,
+        #         model,
+        #         optimizer,
+        #         None,
+        #         tokens_seen=tokens_seen + new_tokens_seen,
+        #     )
 
     return train_loss
 
@@ -184,7 +213,7 @@ def setup():
 
 def setup_environ_flags():
     os.environ["TORCH_SHOW_CPP_STACKTRACES"] = str(1)
-    os.environ["NCCL_ASYNC_ERROR_HANDLING"] = str(1)
+    # os.environ["NCCL_ASYNC_ERROR_HANDLING"] = str(1)
 
 
 def get_policies(cfg, rank, block):
