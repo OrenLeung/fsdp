@@ -1,3 +1,5 @@
+fork of https://github.com/foundation-model-stack/fms-fsdp
+
 # FMS FSDP - (Pre)Training FMS with FSDP
 
 The “fms-fsdp” repo is a companion to the [Foundation Model Stack](https://github.com/foundation-model-stack/foundation-model-stack).
